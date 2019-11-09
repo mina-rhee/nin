@@ -1,0 +1,88 @@
+========================================
+========================================
+README
+========================================
+========================================
+
+========================================
+
+RUBRIC
+========================================
+
+
+[ ] - Playtesting
+[ ] - Primary
+[ ] - Secondary
+Total: -/4
+
+Retries used: NONE (2 extra retries remaining)
+
+[ ] - Attended a design check
+[ ] - Completed playtesting
+
+========================================
+
+Playtesting Requirements
+========================================
+[ ] - Your game must contain a player-controlled unit above an immobile platform
+[ ] - The player-controlled unit must fall in the air
+[ ] - The player-controlled unit should not fall through the platform
+
+
+Primary Engine Requirements
+========================================
+[ ] - Your engine must correctly implement a PhysicsBehavior that holds and updates mass, force, impulse, velocity, and restitution to generate a physically correct response to collisions
+//yes- there is a PhysicsComponents class in my engine.components package
+[ ] - Your engine should be able to handle static objects (other PhysicsBehaviors should collide with static objects, but static objects shouldn't accumulate force or impulse)
+//yes - PhysicsComponent does not update on tick or have impulses applied to them if they are static
+
+Primary Game Requirements
+========================================
+[ ] - The player should have a constant downward acceleration
+//true - gravity is applied to the player and other non static objects on every tick
+[ ] - The player should be able to jump only when standing on a platform (double-jumping and wall-jumping are allowed)
+// true - player can only jump when on ground or platform
+[ ] - Your game must have three objects with visibly different restitution values that can collide with each other.
+// true - each of the three balls have different restitution values - 
+//from left to right as they first appear on the game they are: .9, .7, .5
+[ ] - It must be possible to start a new game without restarting the program
+//yes - pressing the space key will restart the program
+
+
+Secondary Engine Requirements
+=======================================
+[ ] - Handin meets all primary engine requirements
+[ ] - Your engine must support collisions and MTVs with convex polygons
+//true - there is a PolygonCollision component in the engine.components package
+
+Secondary Game Requirements
+======================================
+[ ] - Handin meets all primary game requirements
+[ ] - The TA debuger should be extended to show collisions and MTVs with convex polygons
+[ ] - Your game should include a convex polygon
+//yes - the middle rock platform is a convex polygon
+
+
+Global Playtesting Requirements (you don't need to show how to verify these)
+======================================
+[ ] - Eclipse project or ant build file
+[ ] - No external dependencies
+[ ] - Handin runs on department machines
+[ ] - Handin runs 20+ UPS
+[ ] - Handin only crashes on edge cases
+
+Global Primary Requirements (you don't need to show how to verify these)
+======================================
+[ ] - README
+    [ ] - has a copy of the rubric
+    [ ] - shows how to verify non-global requirements
+    [ ] - documents known bugs
+    [ ] - approximate hours to complete checkpoint
+[ ] - INSTRUCTIONS file included
+[ ] - Engine and game in separate packages
+[ ] - Engine and game logically separated
+[ ] - Engine code is well designed
+[ ] - Game code is reasonably designed
+[ ] - Handin isn't permanent fixed size
+[ ] - Handin never crashes
+[ ] - Handin meets all playtesting requirements

@@ -36,7 +36,7 @@ public abstract class Screen {
 
   protected void onKeyTyped(KeyEvent e) {}
 
-  protected void onKeyPressed(KeyEvent e) {}
+  public void onKeyPressed(KeyEvent e) {}
 
   protected void onKeyReleased(KeyEvent e) {}
 

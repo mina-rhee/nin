@@ -2,8 +2,10 @@ package engine;
 
 import debugger.collisions.AABShape;
 import debugger.collisions.CircleShape;
+import debugger.collisions.PolygonShape;
 import debugger.collisions.Week2;
 import debugger.support.Vec2f;
+import debugger.support.shapes.Shape;
 
 public final class ShapeUtil {
   
@@ -48,6 +50,20 @@ public final class ShapeUtil {
     return s1.getCenter().dist2(s2) <= s1.getRadius() * s1.getRadius();
   }
   
+  public static boolean isColliding(AABShape s1, PolygonShape s2) {
+    return collision(s2, s2) != null;
+  }
+  
+  public static boolean isColliding(AABShape s1, Shape s2) {
+    if(s2 instanceof AABShape) {
+      return isColliding(s1, (AABShape) s2);
+    } else if (s2 instanceof CircleShape) {
+      return isColliding(s1, (CircleShape) s2);
+    } else if (s2 instanceof PolygonShape) {
+      return isColliding(s1, (PolygonShape) s2);
+    }
+    return false;
+  }
   
   public static Vec2f collision(AABShape s1, AABShape s2) {
     if(!ShapeUtil.isColliding(s1, s2)) {
@@ -143,5 +159,289 @@ public final class ShapeUtil {
     } else {
       return s2.minus(s1.getCenter()).normalize().smult(s1.getRadius());
     }
+  }
+  
+  public static Vec2f collision(AABShape s1, PolygonShape s2) {
+    
+    Vec2f mtv = null;
+    float mtv2size = -1;
+    
+    Vec2f polymtv = oneSidePolyCollision(s2, rectToPoly(s1));
+    if(polymtv == null)
+      return null;
+    mtv = polymtv.smult(-1);
+    mtv2size = mtv.mag2();
+    
+    //checking on this x axis
+    Vec2f aaX = new Vec2f(s1.getMinX(), s1.getMaxX());
+    Vec2f polyX = projectPolygonX(s2);
+    if(overlap(aaX, polyX)) {
+      float thismtv = overlapMtv(aaX, polyX);
+      float this2size = thismtv * thismtv;
+      if(mtv2size < 0 || mtv2size > this2size) {
+        mtv = new Vec2f(thismtv, 0);
+        mtv2size = this2size;
+      }
+    } else {
+      return null;
+    }
+    
+    //checking on the y axis
+    Vec2f aaY = new Vec2f(s1.getMinY(), s1.getMaxY());
+    Vec2f polyY = projectPolygonY(s2);
+    if(overlap(aaY, polyY)) {
+      float thismtv = overlapMtv(aaY, polyY);
+      float this2size = thismtv * thismtv;
+      if(mtv2size < 0 || mtv2size > this2size) {
+        mtv = new Vec2f(0, thismtv);
+        mtv2size = this2size;
+      }
+    } else {
+      return null;
+    }
+    
+    return mtv;
+  }
+  
+  public static Vec2f collision(CircleShape s1, PolygonShape s2) {
+    
+    Vec2f mtv = null;
+    float mtv2size = -1;
+    
+    //check on the circle axis
+    Vec2f closest = s2.points[0];
+    double closedist = closest.dist2(s1.center);
+    for(int i = 1; i < s2.points.length; i++) {
+      double dist = s2.points[i].dist2(s1.center);
+      if(dist < closedist) {
+        closedist = dist;
+        closest = s2.points[i];
+      }
+    }
+    
+    Vec2f cNormal = closest.minus(s1.center);
+    
+    Vec2f cInt = projectCircle(s1, cNormal);
+    Vec2f pInt = projectPolygon(cNormal, s2);
+    
+    if(overlap(cInt, pInt)) {
+      float thismtvl = overlapMtv(cInt, pInt);
+      if(cNormal.x == 0) {
+        Vec2f thismtv = new Vec2f(0, thismtvl);
+        float this2size = thismtvl * thismtvl;
+        if(mtv2size < 0 || mtv2size > this2size) {
+          mtv = thismtv;
+          mtv2size = this2size;
+        }
+      } else {
+        Vec2f thismtv = new Vec2f(thismtvl, 
+            thismtvl * cNormal.y / cNormal.x);
+        float this2size = thismtv.mag2();
+        if(mtv2size < 0 || this2size < mtv2size) {
+          mtv2size = this2size;
+          mtv = thismtv;
+        }
+      }
+    } else {
+      return null;
+    }
+    
+    //checking on each axis for the polygon
+    Vec2f e1 = s2.points[s2.points.length - 1];
+    Vec2f e2;
+    for(int i = 0; i < s2.points.length; i++) {
+      e2 = s2.points[i];
+      Vec2f edgeLine = e2.minus(e1);
+      Vec2f edgeNormal = new Vec2f(edgeLine.y, - edgeLine.x);
+      Vec2f circleint = projectCircle(s1, edgeNormal);
+      Vec2f polyint = projectPolygon(edgeNormal, s2);
+      if(overlap(circleint, polyint)) {
+        float thismtvl = overlapMtv(circleint, polyint);
+        if(edgeNormal.x == 0) {
+          Vec2f thismtv = new Vec2f(0, thismtvl);
+          float this2size = thismtvl * thismtvl;
+          if(mtv2size < 0 || mtv2size > this2size) {
+            mtv = thismtv;
+            mtv2size = this2size;
+          }
+        } else {
+          Vec2f thismtv = new Vec2f(thismtvl, 
+              thismtvl * edgeNormal.y / edgeNormal.x);
+          float this2size = thismtv.mag2();
+          if(mtv2size < 0 || this2size < mtv2size) {
+            mtv2size = this2size;
+            mtv = thismtv;
+          }
+        }
+      } else {
+        return null;
+      }
+      e1 = e2;
+    }
+    
+    return mtv;
+  }
+  
+  public static Vec2f collision(PolygonShape s1, AABShape s2) {
+    Vec2f f = collision(s2, s1);
+    return f == null ? null : f.reflect();
+  }
+
+  public static Vec2f collision(PolygonShape s1, CircleShape s2) {
+    Vec2f f = collision(s2, s1);
+    return f == null ? null : f.reflect();
+  }
+
+  public static Vec2f collision(PolygonShape s1, Vec2f s2) {
+    Vec2f e1 = s1.points[s1.points.length - 1];
+    Vec2f e2;
+    for(int i = 0; i < s1.points.length; i++) {
+      e2 = s1.points[i];
+      if (e2.minus(e1).cross(e2.minus(s2)) < 0) {
+        return null;
+      } 
+      e1 = e2;
+    }
+    return new Vec2f(1);
+  }
+
+  public static Vec2f collision(PolygonShape s1, PolygonShape s2) {
+    Vec2f mtv1 = oneSidePolyCollision(s1, s2);
+    if(mtv1 == null)
+      return null;
+    Vec2f mtv2 = oneSidePolyCollision(s2, s1).smult(-1);
+    if(mtv2 == null) 
+      return null;
+    if(mtv1.mag2() > mtv2.mag2())
+      return mtv2;
+    else
+      return mtv1;
+  }
+  
+  private static boolean overlap(Vec2f i1, Vec2f i2) {
+    return i1.x <= i2.y && i2.x <= i1.y;
+  }
+  
+  private static Vec2f projectPolygon(Vec2f l1, PolygonShape s) {
+    Vec2f l2 = new Vec2f(0);
+    
+    if(l1.x == l2.x) {
+      return projectPolygonY(s);
+    }
+    
+    Vec2f p1 = s.points[s.points.length - 1].projectOntoLine(l1, l2);
+    float min = p1.x;
+    float max = p1.x;
+    for(int i = 0; i < s.points.length; i++) {
+      float xVal = s.points[i].projectOntoLine(l1, l2).x;
+      if(xVal < min) {
+        min = xVal;
+      } else if (xVal > max) {
+        max = xVal;
+      }
+    }
+    return new Vec2f(min, max);
+  }
+  
+  private static Vec2f projectPolygonY(PolygonShape s) {
+    float min = s.points[s.points.length - 1].y;
+    float max = min;
+    for(int i = 0; i < s.points.length; i++) {
+      float yval = s.points[i].y;
+      if(yval < min) {
+        min = yval;
+      } else if (yval > max) {
+        max = yval;
+      }
+    }
+    return new Vec2f(min, max);
+  }
+  
+  private static Vec2f projectPolygonX(PolygonShape s) {
+    float min = s.points[s.points.length - 1].x;
+    float max = min;
+    for(int i = 1; i < s.points.length; i++) {
+      float xval = s.points[i].x;
+      if(xval < min) {
+        min = xval;
+      } else if (xval > max) {
+        max = xval;
+      }
+    }
+    return new Vec2f(min, max);
+  }
+  
+  private static PolygonShape rectToPoly(AABShape s) {
+    return new PolygonShape(new Vec2f(s.getMinX(), s.getMinY()), 
+        new Vec2f(s.getMaxX(), s.getMinY()),
+        new Vec2f(s.getMaxX(), s.getMaxY()),
+        new Vec2f(s.getMinX(), s.getMaxY()));
+  }
+  
+  private static Vec2f getMtv(Vec2f int1, Vec2f int2, Vec2f line) {
+    if(overlap(int1, int2)) {
+      float mtvl = overlapMtv(int1, int2);
+      if(line.x == 0) {
+        return new Vec2f(0, mtvl);
+      } else {
+        return new Vec2f(mtvl, mtvl * line.y / line.x);
+      }
+    } else {
+      return null;
+    }
+  }
+  
+  private static float overlapMtv(Vec2f i1, Vec2f i2) {
+    float left = i1.y - i2.x;
+    float right = i2.y - i1.x;
+    if(left < right) {
+      return -left;
+    } else {
+      return right;
+    }
+  }
+  
+  private static Vec2f projectCircle(CircleShape c, Vec2f l) {
+    Vec2f cc = c.center;
+    if(l.x == 0) {
+      return new Vec2f(cc.y - c.radius, cc.y + c.radius);
+    } else {
+      Vec2f change = l.normalize().smult(c.radius);
+      Vec2f lChange = cc.minus(change).projectOnto(l);
+      Vec2f rRight = cc.plus(change).projectOnto(l);
+      if(change.x < 0) {
+        return new Vec2f(rRight.x, lChange.x);
+      } else {
+        return new Vec2f(lChange.x, rRight.x);
+      }
+    }
+  }
+  
+  private static Vec2f oneSidePolyCollision(PolygonShape s1, PolygonShape s2) {
+    Vec2f mtv = null;
+    float mtv2size = -1;
+    
+    
+    //checking on each axis for the polygon
+    Vec2f e1 = s1.points[s1.points.length - 1];
+    Vec2f e2;
+    for(int i = 0; i < s1.points.length; i++) {
+      e2 = s1.points[i];
+      
+      Vec2f edgeLine = e2.minus(e1);
+      Vec2f edgeNormal = new Vec2f(edgeLine.y, - edgeLine.x);
+      Vec2f aabint = projectPolygon(edgeNormal, s1);
+      Vec2f polyint = projectPolygon(edgeNormal, s2);
+      Vec2f thismtv = getMtv(aabint, polyint, edgeNormal);
+      if(thismtv == null)
+        return null;
+      float thismag2 = thismtv.mag2();
+      if(mtv2size < 0 || mtv2size > thismag2) {
+        mtv = thismtv;
+        mtv2size = thismag2;
+      }
+      e1 = e2;
+    }
+    return mtv;
   }
 }

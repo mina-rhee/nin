@@ -18,7 +18,7 @@ import template.Vec2d;
 public abstract class Application extends FXFrontEnd {
 
   private List<Screen> screens = new ArrayList<>();
-  private Screen focusScreen;
+  protected Screen focusScreen;
 
   public Application(String title) {
     super(title);

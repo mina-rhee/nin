@@ -1,0 +1,4 @@
+use left and right arrows to move, up arrow to jump. hitting space will restart the game. 
+player controls the little astronaut.
+there are invisible walls at the sides of the screen so that player or balls cannot go past
+the points in the screen of the inital size.

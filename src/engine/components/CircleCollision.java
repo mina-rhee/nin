@@ -5,16 +5,10 @@ import debugger.support.Vec2f;
 import engine.ShapeUtil;
 import template.Vec2d;
 
-public abstract class CircleCollision extends CollisionComponent {
+public class CircleCollision extends CollisionComponent<CircleShape> {
   
-  public CircleCollision(Vec2d coordinate) {
-    super(coordinate);
-  }
-
-  private CircleShape bound;
-  
-  public CircleShape getBound() {
-    return bound;
+  public CircleCollision(Vec2d coordinate, CircleShape b) {
+    super(coordinate, b);
   }
   
   @Override
@@ -24,23 +18,32 @@ public abstract class CircleCollision extends CollisionComponent {
   
   @Override
   public Vec2f collidesCircle(CircleCollision c) {
-    return ShapeUtil.collision(bound, c.getBound());
+    return ShapeUtil.collision(shape, c.getShape());
   }
   
   @Override
   public Vec2f collidesAAB(AABCollision aab) {
-    return ShapeUtil.collision(bound, aab.getBound());
+    return ShapeUtil.collision(shape, aab.getShape());
   }
   
   @Override
   public void incrementCoord(Vec2d inc) {
-    super.incrementCoord(inc);
-    bound.setCenter(bound.getCenter().plus(inc.toVec2f()));
+    shape.setCenter(shape.getCenter().plus(inc.toVec2f()));
   }
-  
-  public void incrementCoord(Vec2f inc) {
-    super.incrementCoord(inc.toVec2d());
-    bound.setCenter(bound.getCenter().plus(inc));
+
+  @Override
+  public Vec2f collidesPolygon(PolygonCollision poly) {
+    return ShapeUtil.collision(shape, poly.getShape());
+  }
+
+  @Override
+  public void setPos(Vec2d pos) {
+    shape.setCenter(pos.toVec2f());
+  }
+
+  @Override
+  public Vec2d getCoord() {
+    return shape.getCenter().toVec2d().minus(new Vec2d(shape.getRadius()));
   }
   
 }

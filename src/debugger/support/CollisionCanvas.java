@@ -379,10 +379,10 @@ public class CollisionCanvas {
 			}
 		}
 		for(int p = 0; p < _polygons.length; p++) {
-			mtv = _collisions.collision(_boxes[i], _polygons[p]);
+		  mtv = _collisions.collision(_circles[i], _polygons[p]);
 			if(mtv != null) {
 				collision = true;
-				_boxes[i].addMTV(getLine(), mtv);
+				_circles[i].addMTV(getLine(), mtv);
 			}
 		}
 		
@@ -416,14 +416,14 @@ public class CollisionCanvas {
 			
 			p.setStroke(UIConstants.BLACK);
 			p.setStrokeWidth(2);
-			runCircleCollisions(i);
+			runPolygonCollisions(i);
 
 		}
 	}
 	
 	// sets the color of the given circle and draws its MTV
 	public void runPolygonCollisions(int i) {
-		boolean mouse = _leftMouseDown ? (_circles[i] == _selected) : (_circles[i] == _hovered);
+	  boolean mouse = _leftMouseDown ? (_polygons[i] == _selected) : (_polygons[i] == _hovered);
 		
 		Vec2f mtv;
 		resetMTVs(_polygons[i]);
@@ -445,7 +445,7 @@ public class CollisionCanvas {
 		}
 		for(int p = 0; p < _polygons.length; p++) {
 			if(p != i) {
-				mtv = _collisions.collision(_boxes[i], _polygons[p]);
+				mtv = _collisions.collision(_polygons[i], _polygons[p]);
 				if(mtv != null) {
 					collision = true;
 					_boxes[i].addMTV(getLine(), mtv);
